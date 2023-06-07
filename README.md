@@ -1,9 +1,6 @@
 # Local Path Integration for Attribution
 
-Code for AAAI 2023 "Local Path Integration for Attribution" by Peiyu Yang, Naveed Akhtar, Zeyi Wen and Ajmal Mian.
-
 This code implements Local Path Integration from the following paper:
-
 
 > Peiyu Yang, Naveed Akhtar, Zeyi Wen, and Ajmal Mian
 >
