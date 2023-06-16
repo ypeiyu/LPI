@@ -73,11 +73,3 @@ class FullGradExtractor:
         input_gradients = torch.autograd.grad(outputs = output_scalar, inputs = x)[0]
 
         return input_gradients, self.feature_grads
-
-
-        
-
-
-
-
-    

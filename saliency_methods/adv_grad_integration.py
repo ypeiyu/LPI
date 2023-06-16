@@ -75,7 +75,6 @@ def pgd_step(image, epsilon, model, init_pred, targeted, max_iter):
         if False not in (pred == targeted.view(-1, 1)):
             break
 
-        # output = F.softmax(output, dim=1)
         output = -torch.log_softmax(output, 1)/output.shape[0]
         sample_indices = torch.arange(0, output.size(0)).cuda()
         indices_tensor = torch.cat([
@@ -103,7 +102,6 @@ def pgd_step(image, epsilon, model, init_pred, targeted, max_iter):
             create_graph=True)
         data_grad_lab = model_grads[0].detach().data
 
-        # perturbed_image, delta = fgsm_step(image, epsilon, data_grad_adv, data_grad_lab)
         perturbed_image, delta = fgsm_step(image, epsilon, data_grad_adv, data_grad_lab)
         c_delta += delta
 
@@ -111,13 +109,12 @@ def pgd_step(image, epsilon, model, init_pred, targeted, max_iter):
 
 
 class AGI(object):
-    def __init__(self, model, k, top_k, cls_num, eps=0.05):  # 0.05 # 0.005
+    def __init__(self, model, k, top_k, cls_num, eps=0.05):
         self.model = model
         self.cls_num = cls_num - 1
         self.eps = eps
         self.k = k
         self.top_k = top_k
-        # self.selected_ids = random.sample(list(range(0, cls_num-1)), top_k)
 
     def select_id(self, label):
         while True:
@@ -130,10 +127,6 @@ class AGI(object):
 
     def shap_values(self, input_tensor, sparse_labels=None):
 
-        # Send the data and label to the device
-        # data = input_tensor.cuda()
-        # data = data.to(device)
-
         # Forward pass the data through the model
         output = self.model(input_tensor)
         self.model.eval()
@@ -141,16 +134,13 @@ class AGI(object):
 
         # initialize the step_grad towards all target false classes
         step_grad = 0
-        # num_class = 1000 # number of total classes
         top_ids_lst = []
         for bth in range(input_tensor.shape[0]):
             top_ids_lst.append(self.select_id(sparse_labels[bth]))  # only for predefined ids
         top_ids = torch.cat(top_ids_lst, dim=0).cuda()
 
-        # top_ids = torch.ones(*[input_tensor.shape[0], 1]).cuda()
-
         for l in range(top_ids.shape[1]):
-            targeted = top_ids[:, l].cuda()  # .to(device)
+            targeted = top_ids[:, l].cuda()
             delta, perturbed_image = pgd_step(undo_preprocess(input_tensor), self.eps, self.model, init_pred, targeted, self.k)
             # delta, perturbed_image = pgd_step(input_tensor, self.eps, self.model, init_pred, targeted, self.k)
 
