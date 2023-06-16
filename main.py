@@ -17,6 +17,24 @@ from saliency_methods import RandomBaseline, Gradients, IntegratedGradients, Exp
 from DiffID import DiffID
 
 
+from utils.settings import parser_choices, parser_default
+parser.add_argument('-attr_method', type=str, required=False,
+                    choices=parser_choices['attr_method'],
+                    default=parser_default['attr_method'])
+parser.add_argument('-model', type=str, required=False,
+                    choices=parser_choices['model'],
+                    default=parser_default['model'])
+parser.add_argument('-dataset', type=str, required=False,
+                    choices=parser_choices['dataset'],
+                    default=parser_default['dataset'])
+parser.add_argument('-k', type=int, required=False,
+                    default=parser_default['k'])
+parser.add_argument('-bg_size', type=int, required=False,
+                    default=parser_default['bg_size'])
+parser.add_argument('-num_centers', type=int, required=False,
+                    default=parser_default['num_centers'])
+
+
 def load_explainer(model, **kwargs):
     method_name = kwargs['method_name']
     if method_name == 'Random':
@@ -104,16 +122,7 @@ def load_dataset(dataset_name, test_batch_size):
                 transforms.ToTensor(),
                 transforms.Normalize(mean=mean, std=std),
             ]))
-        if 'subset' in dataset_name:
-            # ---------------------------- subset of imagenet eval ---------------------------
-            data_pth = 'datasets/subset'
-            imagenet_val_dataset = datasets.ImageFolder(
-                data_pth,
-                transforms.Compose([
-                    transforms.Resize(size=(img_size, img_size)),
-                    transforms.ToTensor(),
-                    transforms.Normalize(mean=mean, std=std),
-                ]))
+
         imagenet_val_loader = torch.utils.data.DataLoader(
             imagenet_val_dataset, batch_size=test_batch_size,
             shuffle=False, num_workers=4, pin_memory=False)
@@ -121,7 +130,7 @@ def load_dataset(dataset_name, test_batch_size):
         return imagenet_train_dataset, imagenet_val_loader
 
 
-def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None):
+def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None, num_centers=None):
     if model_name == 'vgg16':
         model = models.vgg16(pretrained=True)
     elif model_name == 'resnet34':
@@ -169,5 +178,6 @@ def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None):
 
 
 if __name__ == '__main__':
-    for method in ['LPI', 'IntGrad']:
-        quan_exp(method_name=method, model_name='vgg16', dataset_name='ImageNet_subset')
+
+    quan_exp(method_name=args.attr_method, model_name=args.model, dataset_name=args.dataset,
+             k=args.k, bg_size=args.bg_size, num_centers=args.num_centers)
