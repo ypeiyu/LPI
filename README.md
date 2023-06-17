@@ -13,10 +13,45 @@ Path attribution methods are a popular tool to interpret a visual model's predic
 ![LPI](figs/LPI.png)
 
 
-# Prerequisites
+## Prerequisites
 
 - python 3.9.2
 - matplotlib 3.5.1
 - numpy 1.21.5
 - pytorch 1.12.0
 - torchvision 0.13.1
+
+
+## Estimate Attributions with LPI
+```
+python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric Visualization -k 5 -bg_size 10 -num_center 11
+```
+
+## Quantitatively Evaluate the Reliability of Attributions with DiffID
+
+### Step 1: Preparing dataset.
+```
+dataset\IMAGENET
+```
+
+### Step 2: Preparing models.
+```
+pretrained_models\YOUR_MODEL
+```
+
+### Step 3: Quantitatively evaluate attributions.
+
+```
+python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric Visualization -k 5 -bg_size 10 -num_center 11
+```
+
+## Bibtex
+If you found this work helpful for your research, please cite the following paper:
+```
+@artical{yang2023local,
+    title={Local Path Integration for Attribution},
+    author={Peiyu, Yang and Naveed, Akhtar and Zeyi, Wen and Ajmal, Mian},
+    booktitle={AAAI Conference on Artificial Intelligence {AAAI}},
+    year={2023}
+}
+```
