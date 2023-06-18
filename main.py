@@ -14,7 +14,7 @@ from torchvision import models
 from utils.settings import img_size
 from utils.preprocess import mean, std
 from saliency_methods import RandomBaseline, Gradients, IntegratedGradients, ExpectedGradients, AGI, LPI
-from DiffID import DiffID
+from evaluator import Evaluator
 
 
 from utils.settings import parser_choices, parser_default
@@ -162,7 +162,7 @@ def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None, num_ce
 
     # load criterion
     explainer = load_explainer(model=model, **explainer_args[method_name])
-    diff_id = DiffID(model, explainer=explainer, dataloader=test_loader)
+    evaluator = Evaluator(model, explainer=explainer, dataloader=test_loader)
 
     # --------------------- perturb experiments ----------------------
     if method_name == 'LPI':
@@ -172,9 +172,9 @@ def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None, num_ce
             centers = np.load(
                 'dataset_distribution/' + model_name +
                 '/kmeans_center_' + str(cent_num) + '.npy')
-        diff_id.quantify(baseline_name='mean', q_ratio_lst=[step * 0.1 for step in range(1, 10)], centers=centers)
+        evaluator.DiffID(q_ratio_lst=[step * 0.1 for step in range(1, 10)], centers=centers)
     else:
-        diff_id.quantify(baseline_name='mean', q_ratio_lst=[step * 0.1 for step in range(1, 10)])
+        evaluator.DiffID(q_ratio_lst=[step * 0.1 for step in range(1, 10)])
 
 
 if __name__ == '__main__':
