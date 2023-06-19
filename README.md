@@ -24,7 +24,7 @@ Path attribution methods are a popular tool to interpret a visual model's predic
 
 ## Estimate Attributions with LPI
 ```
-python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric Visualization -k 5 -bg_size 10 -num_center 11
+python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric visualize -k 5 -bg_size 10 -num_center 11
 ```
 
 ## Quantitatively Evaluate the Reliability of Attributions with DiffID
@@ -42,7 +42,7 @@ pretrained_models\YOUR_MODEL
 ### Step 3: Quantitatively evaluate attributions.
 
 ```
-python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric Visualization -k 5 -bg_size 10 -num_center 11
+python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric DiffID -k 5 -bg_size 10 -num_center 11
 ```
 
 ## Bibtex
