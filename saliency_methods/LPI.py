@@ -51,12 +51,14 @@ class LPI(object):
         self.bg_size = len(datasets[0].imgs)
         self.ref_samplers = []
         for baseline_set in datasets:
-            self.ref_samplers.append(torch.utils.data.DataLoader(
-                dataset=baseline_set,
-                batch_size=self.bg_size,
-                shuffle=False,
-                pin_memory=False,
-                drop_last=False))
+            self.ref_samplers.append(
+                torch.utils.data.DataLoader(
+                    dataset=baseline_set,
+                    batch_size=self.bg_size,
+                    shuffle=False,
+                    pin_memory=False,
+                    drop_last=False)
+            )
 
         densities = self.density.reshape([1, -1, 1, 1, 1])
         self.density_tensor = densities.cuda()
@@ -93,9 +95,9 @@ class LPI(object):
 
         else:
             if k_ == 1:
-                t_tensor = torch.cat([torch.Tensor([1.0]) for i in range(batch_size*k_*self.bg_size)]).to(DEFAULT_DEVICE)
+                t_tensor = torch.cat([torch.Tensor([1.0]) for _ in range(batch_size*k_*self.bg_size)]).to(DEFAULT_DEVICE)
             else:
-                t_tensor = torch.cat([torch.linspace(0, 1, k_) for i in range(batch_size*self.bg_size)]).to(DEFAULT_DEVICE)
+                t_tensor = torch.cat([torch.linspace(0, 1, k_) for _ in range(batch_size*self.bg_size)]).to(DEFAULT_DEVICE)
 
         # -------------------- evaluate the end points ----------------------
         shape = [batch_size, k_*self.bg_size] + [1] * num_input_dims
@@ -124,8 +126,6 @@ class LPI(object):
         for bg_id in range(self.bg_size):
             for k_id in range(self.k):
                 particular_slice = samples_input[:, bg_id*self.k+k_id]
-                # output, _, proto_output, _ = model(particular_slice)
-
                 output = self.model(particular_slice)
                 # additional
                 # output = torch.log_softmax(output, 1)
@@ -166,10 +166,8 @@ class LPI(object):
             inter (optional, default=None)
         """
         shape = list(input_tensor.shape)
-        shape.insert(1, self.bg_size) # self.k*
-        # reference_tensor = torch.zeros(shape).float().to(DEFAULT_DEVICE)
+        shape.insert(1, self.k*self.bg_size)
 
-        # if LPI else LPI
         ref = []
         if self.density.shape[0] > 1:
             for c_ind in centers:
@@ -186,8 +184,9 @@ class LPI(object):
         else:
             ref = [self._get_ref_batch(0) for _ in range(shape[0])]
 
-        ref = torch.cat(ref)
-        reference_tensor = ref.view(*shape).cuda()
+        ref_ = torch.cat(ref)
+
+        reference_tensor = ref_.view(*shape).cuda()
         reference_tensor = reference_tensor.repeat(1, self.k, 1, 1, 1)
 
         samples_input = self._get_samples_input(input_tensor, reference_tensor)

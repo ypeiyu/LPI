@@ -2,14 +2,9 @@
 import functools
 import operator
 
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from torch.autograd import grad
-from torch.utils.data import DataLoader
 import random
-# DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-import torch.nn.functional as F
 
 from utils.preprocess import preprocess, undo_preprocess
 
@@ -65,7 +60,6 @@ def pgd_step(image, epsilon, model, init_pred, targeted, max_iter):
     """target here is the targeted class to be perturbed to"""
     perturbed_image = image.clone()
     c_delta = 0  # cumulative delta
-    sign = 0
     for i in range(max_iter):
         # requires grads
         perturbed_image.requires_grad = True
@@ -142,8 +136,6 @@ class AGI(object):
         for l in range(top_ids.shape[1]):
             targeted = top_ids[:, l].cuda()
             delta, perturbed_image = pgd_step(undo_preprocess(input_tensor), self.eps, self.model, init_pred, targeted, self.k)
-            # delta, perturbed_image = pgd_step(input_tensor, self.eps, self.model, init_pred, targeted, self.k)
-
             step_grad += delta
 
         attribution = step_grad

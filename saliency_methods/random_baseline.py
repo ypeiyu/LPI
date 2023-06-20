@@ -27,6 +27,6 @@ class RandomBaseline():
     def __init__(self):
         pass
 
-    def shap_values(self, image, sparse_labels=None):
+    def shap_values(self, image):
         return torch.rand(*image.shape).cuda()
 
