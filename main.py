@@ -1,10 +1,6 @@
 import os
 import argparse
 import numpy as np
-parser = argparse.ArgumentParser()
-parser.add_argument('-gpuid', nargs=1, type=str, default='0,1')
-args = parser.parse_args()
-# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 import torch.utils.data
 import torchvision.datasets as datasets
@@ -18,6 +14,9 @@ from evaluator import Evaluator
 
 
 from utils.settings import parser_choices, parser_default
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-gpuid', nargs=1, type=str, default='0')
 parser.add_argument('-attr_method', type=str, required=False,
                     choices=parser_choices['attr_method'],
                     default=parser_default['attr_method'])
@@ -27,28 +26,30 @@ parser.add_argument('-model', type=str, required=False,
 parser.add_argument('-dataset', type=str, required=False,
                     choices=parser_choices['dataset'],
                     default=parser_default['dataset'])
+parser.add_argument('-metric', type=str, required=False,
+                    choices=parser_choices['metric'],
+                    default=parser_default['metric'])
 parser.add_argument('-k', type=int, required=False,
                     default=parser_default['k'])
 parser.add_argument('-bg_size', type=int, required=False,
                     default=parser_default['bg_size'])
 parser.add_argument('-num_centers', type=int, required=False,
                     default=parser_default['num_centers'])
+args = parser.parse_args()
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpuid
 
 
 def load_explainer(model, **kwargs):
     method_name = kwargs['method_name']
     if method_name == 'Random':
-        # ------------------------------------ Random Baseline ----------------------------------------------
         print('================= Random Baseline ==================')
         random = RandomBaseline()
         return random
     elif method_name == 'InputGrad':
-        # ------------------------------------ Input Gradients ----------------------------------------------
         print('================= Input Gradients ==================')
         input_grad = Gradients(model)
         return input_grad
     elif method_name == 'AGI':
-        # ------------------------------------ AGI ----------------------------------------------
         print('================= AGI ==================')
         k = kwargs['k']
         top_k = kwargs['top_k']
@@ -56,7 +57,6 @@ def load_explainer(model, **kwargs):
         agi = AGI(model, k=k, top_k=top_k, cls_num=cls_num)
         return agi
     elif method_name == 'ExpGrad' or method_name == 'ExpGrad_new':
-        # ------------------------------------ Expected Gradients ----------------------------------------------
         print('============================ Expected Gradients ============================')
         k = kwargs['k']
         bg_size = kwargs['bg_size']
@@ -64,16 +64,13 @@ def load_explainer(model, **kwargs):
         test_batch_size = kwargs['test_batch_size']
         random_alpha = kwargs['random_alpha']
         expected_grad = ExpectedGradients(model, k=k, bg_dataset=train_dataset, bg_size=bg_size, batch_size=test_batch_size, random_alpha=random_alpha)
-        # expected_grad = ExpectedGradients(model, k=k, bg_dataset=train_dataset, bg_size=bg_size, batch_size=test_batch_size)
         return expected_grad
     elif method_name == 'IntGrad':
-        # ------------------------------------ Integrated Gradients ----------------------------------------------
         print('============================ Integrated Gradients ============================')
         k = kwargs['k']
         integrated_grad = IntegratedGradients(model, k=k)
         return integrated_grad
     elif method_name == 'LPI':
-        # ------------------------------------ Local Path Integration ----------------------------------------------
         print('================= Local Path Integration ==================')
         alpha = True
         k = kwargs['k']
@@ -130,7 +127,7 @@ def load_dataset(dataset_name, test_batch_size):
         return imagenet_train_dataset, imagenet_val_loader
 
 
-def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None, num_centers=None):
+def attr_eval(method_name, model_name, dataset_name, metric, k=None, bg_size=None, num_centers=None):
     if model_name == 'vgg16':
         model = models.vgg16(pretrained=True)
     elif model_name == 'resnet34':
@@ -150,9 +147,9 @@ def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None, num_ce
         'InputGrad': {'method_name': 'InputGrad'},
         'IntGrad': {'method_name': 'IntGrad', 'k': 20},
         'AGI': {'method_name': 'AGI', 'k': 20, 'top_k': 1, 'cls_num': 1000},
-        'ExpGrad': {'method_name': 'ExpGrad', 'k': 1, 'bg_size': 20, 'train_dataset':train_dataset,
+        'ExpGrad': {'method_name': 'ExpGrad', 'k': 1, 'bg_size': 20, 'train_dataset': train_dataset,
                     'test_batch_size': test_bth, 'random_alpha': False},
-        'LPI': {'method_name': 'LPI', 'k': 1, 'bg_size': 20, 'num_centers': 11,
+        'LPI': {'method_name': 'LPI', 'k': 1, 'bg_size': 20, 'num_centers': num_centers,
                 'root_pth': 'dataset_distribution/'+model_name+'/'},
     }
 
@@ -165,19 +162,35 @@ def quan_exp(method_name, model_name, dataset_name, k=None, bg_size=None, num_ce
     evaluator = Evaluator(model, explainer=explainer, dataloader=test_loader)
 
     # --------------------- perturb experiments ----------------------
-    if method_name == 'LPI':
-        cent_num = explainer_args['LPI']['num_centers']
-        centers = None
-        if cent_num > 1:
-            centers = np.load(
-                'dataset_distribution/' + model_name +
-                '/kmeans_center_' + str(cent_num) + '.npy')
-        evaluator.DiffID(q_ratio_lst=[step * 0.1 for step in range(1, 10)], centers=centers)
-    else:
-        evaluator.DiffID(q_ratio_lst=[step * 0.1 for step in range(1, 10)])
+    if metric == 'DiffID':
+        if method_name == 'LPI':
+            cent_num = explainer_args['LPI']['num_centers']
+            centers = None
+            if cent_num > 1:
+                centers = np.load(
+                    'dataset_distribution/' + model_name +
+                    '/kmeans_center_' + str(cent_num) + '.npy')
+            evaluator.DiffID(ratio_lst=[step * 0.1 for step in range(1, 10)], centers=centers)
+        else:
+            evaluator.DiffID(ratio_lst=[step * 0.1 for step in range(1, 10)])
+
+    if metric == 'visualize':
+
+        num_vis = 50
+        f_name = 'exp_fig/'+method_name+'_vis/'
+        if method_name == 'LPI':
+            cent_num = explainer_args['LPI']['num_centers']
+            centers = None
+            if cent_num > 1:
+                centers = np.load(
+                    'dataset_distribution/' + model_name +
+                    '/kmeans_center_' + str(cent_num) + '.npy')
+            evaluator.visual_inspection(file_name=f_name, num_vis=num_vis, method_name=method_name, centers=centers)
+        else:
+            evaluator.visual_inspection(file_name=f_name, num_vis=num_vis, method_name=method_name)
 
 
 if __name__ == '__main__':
 
-    quan_exp(method_name=args.attr_method, model_name=args.model, dataset_name=args.dataset,
-             k=args.k, bg_size=args.bg_size, num_centers=args.num_centers)
+    attr_eval(method_name=args.attr_method, model_name=args.model, dataset_name=args.dataset, metric=args.metric,
+              k=args.k, bg_size=args.bg_size, num_centers=args.num_centers)

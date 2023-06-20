@@ -25,8 +25,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-gpuid', nargs=1, type=str, default='0')
 parser.add_argument('-dataset', type=str, required=False, default='ImageNet')
 parser.add_argument('-model', type=str, required=False, default='resnet34')
-parser.add_argument('-center_num_lst', type=list, required=False, default=[11])
-parser.add_argument('-ref_num_lst', type=list, required=False, default=[20])
+parser.add_argument('-center_num', type=str, required=False, default='0,9')
+parser.add_argument('-ref_num', type=str, required=False, default='20,10')
 
 args = parser.parse_args()
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpuid
@@ -251,4 +251,6 @@ def computing_distribution(dataset_name, model_name, center_num_lst, ref_num_lst
 
 
 if __name__ == '__main__':
-    computing_distribution(dataset_name=args.dataset, model_name=args.model, center_num_lst=args.center_num_lst, ref_num_lst=args.ref_num_lst)
+    center_num_lst = [int(num) for num in args.center_num.split(',')]
+    ref_num_lst = [int(num) for num in args.ref_num.split(',')]
+    computing_distribution(dataset_name=args.dataset, model_name=args.model, center_num_lst=center_num_lst, ref_num_lst=ref_num_lst)
