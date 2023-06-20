@@ -4,15 +4,15 @@ parser_choices = {
     'attr_method': ['InputGrad', 'IntGrad', 'ExpGrad', 'AGI', 'LPI', 'Random'],
     'model': ['resnet34', 'vgg16'],
     'dataset': ['ImageNet'],
-    'metric': ['DiffID', ''],
+    'metric': ['DiffID', 'visualize'],
 }
 
 parser_default = {
     'attr_method': 'LPI',
     'model': 'resnet34',
     'dataset': 'ImageNet',
-    'metric': '',
+    'metric': 'DiffID',
     'k': 1,
     'bg_size': 20,
-    'num_centers': 11,
+    'num_centers': 1,
 }
