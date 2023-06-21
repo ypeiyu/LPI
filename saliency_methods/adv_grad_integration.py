@@ -1,12 +1,9 @@
-#!/usr/bin/env python
 import functools
 import operator
 
 import torch
 from torch.autograd import grad
 import random
-
-from utils.preprocess import preprocess, undo_preprocess
 
 
 def gather_nd(params, indices):
@@ -135,7 +132,7 @@ class AGI(object):
 
         for l in range(top_ids.shape[1]):
             targeted = top_ids[:, l].cuda()
-            delta, perturbed_image = pgd_step(undo_preprocess(input_tensor), self.eps, self.model, init_pred, targeted, self.k)
+            delta, perturbed_image = pgd_step(input_tensor, self.eps, self.model, init_pred, targeted, self.k)
             step_grad += delta
 
         attribution = step_grad

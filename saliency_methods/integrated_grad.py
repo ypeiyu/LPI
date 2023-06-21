@@ -1,12 +1,7 @@
-#!/usr/bin/env python
 import functools
 import operator
-
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from torch.autograd import grad
-from torch.utils.data import DataLoader
 
 DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -47,10 +42,6 @@ class IntegratedGradients(object):
         self.model.eval()
         self.k = k
         self.scale_by_inputs = scale_by_inputs
-
-        self.f_std = 0.
-        self.b_std = 0.
-        self.img_num = 0
 
     def _get_samples_input(self, input_tensor, reference_tensor):
         '''

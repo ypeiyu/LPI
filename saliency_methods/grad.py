@@ -1,13 +1,7 @@
-#!/usr/bin/env python
 import functools
 import operator
-
-import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from torch.autograd import grad
-from torch.utils.data import DataLoader
-import torch.nn.functional as F
 
 DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

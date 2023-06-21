@@ -1,12 +1,9 @@
-#!/usr/bin/env python
 import functools
 import operator
 
-import numpy as np
 import torch
 from torch.autograd import grad
 import torch.utils.data
-import torch.nn.functional as F
 
 DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -63,10 +60,6 @@ class LPI(object):
         densities = self.density.reshape([1, -1, 1, 1, 1])
         self.density_tensor = densities.cuda()
 
-        self.f_std = 0.
-        self.b_std = 0.
-        self.img_num = 0
-
     def _get_ref_batch(self, c_ind):
         return next(iter(self.ref_samplers[c_ind]))[0].float()
 
@@ -111,8 +104,8 @@ class LPI(object):
         return samples_input
 
     def _get_samples_delta(self, input_tensor, reference_tensor):
-        input_expand_mult = input_tensor  # .unsqueeze(1)
-        sd = input_expand_mult - reference_tensor[:, ::self.k, :]
+        input_expand_mult = input_tensor.unsqueeze(1)
+        sd = input_expand_mult - reference_tensor
         return sd
 
     def _get_grads(self, samples_input, sparse_labels=None):
@@ -166,7 +159,7 @@ class LPI(object):
             inter (optional, default=None)
         """
         shape = list(input_tensor.shape)
-        shape.insert(1, self.k*self.bg_size)
+        shape.insert(1, self.bg_size)
 
         ref = []
         if self.density.shape[0] > 1:
@@ -184,15 +177,12 @@ class LPI(object):
         else:
             ref = [self._get_ref_batch(0) for _ in range(shape[0])]
 
-        ref_ = torch.cat(ref)
+        reference_tensor = torch.stack(ref, dim=0).cuda()
+        multi_ref_tensor = reference_tensor.repeat(1, self.k, 1, 1, 1)
 
-        reference_tensor = ref_.view(*shape).cuda()
-        reference_tensor = reference_tensor.repeat(1, self.k, 1, 1, 1)
-
-        samples_input = self._get_samples_input(input_tensor, reference_tensor)
-        samples_delta = self._get_samples_delta(samples_input, reference_tensor)
-        grad_tensor = self._get_grads(reference_tensor, sparse_labels)
-        grad_tensor = grad_tensor.view(shape)
+        samples_input = self._get_samples_input(input_tensor, multi_ref_tensor)
+        samples_delta = self._get_samples_delta(input_tensor, reference_tensor)
+        grad_tensor = self._get_grads(samples_input, sparse_labels)
 
         mult_grads = samples_delta * grad_tensor if self.scale_by_inputs else grad_tensor
         attribution = mult_grads.mean(1)

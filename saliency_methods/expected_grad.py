@@ -1,27 +1,10 @@
-#!/usr/bin/env python
 import functools
 import operator
-
 import torch
 from torch.autograd import grad
 import torch.utils.data
 
-import numpy as np
-from utils import undo_preprocess_input_function
-import cv2
-
-
 DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-def single_img_inspection(img, file_name):
-    image_set = undo_preprocess_input_function(img).detach().cpu().numpy()
-    for i in range(image_set.shape[0]):
-        image = image_set[i] * 255
-        image = image.astype(np.uint8)
-        image = np.transpose(image, [1, 2, 0])
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        cv2.imwrite(file_name+'img'+str(i)+'.jpg', image)
 
 
 def gather_nd(params, indices):
@@ -115,19 +98,14 @@ class ExpectedGradients(object):
         return samples_input
 
     def _get_samples_delta(self, input_tensor, reference_tensor):
-        if input_tensor.shape != reference_tensor.shape:
-            input_expand_mult = input_tensor.unsqueeze(1)
-            sd = input_expand_mult - reference_tensor[:, ::self.k, :]
-        else:
-            sd = input_tensor - reference_tensor
+        input_expand_mult = input_tensor.unsqueeze(1)
+        sd = input_expand_mult - reference_tensor
         return sd
 
     def _get_grads(self, samples_input, sparse_labels=None):
         samples_input.requires_grad = True
         shape = list(samples_input.shape)
         shape[1] = self.bg_size
-
-        shape.insert(2, self.k)
 
         grad_tensor = torch.zeros(shape).float().to(DEFAULT_DEVICE)
 
@@ -170,23 +148,18 @@ class ExpectedGradients(object):
             inter (optional, default=None)
         """
         shape = list(input_tensor.shape)
-        shape.insert(1, self.k*self.bg_size)
+        shape.insert(1, self.bg_size)
 
-        reference_tensor = torch.zeros(shape).float().to(DEFAULT_DEVICE)
         ref = self._get_ref_batch()
-        for bth in range(shape[0]):
-            for bg in range(self.bg_size):
-                ref_ = ref[bth * self.bg_size + bg]
-                reference_tensor[bth, bg*self.k:(bg+1)*self.k, :] = ref_
+        reference_tensor = ref.view(*shape).cuda()
+
         if ref.shape[0] != input_tensor.shape[0]*self.k:
             reference_tensor = reference_tensor[:input_tensor.shape[0]*self.k]
+        multi_ref_tensor = reference_tensor.repeat(1, self.k, 1, 1, 1)
 
-        # ============================================
-        samples_input = self._get_samples_input(input_tensor, reference_tensor)
-        samples_delta = self._get_samples_delta(samples_input, reference_tensor)
+        samples_input = self._get_samples_input(input_tensor, multi_ref_tensor)
+        samples_delta = self._get_samples_delta(input_tensor, reference_tensor)
         grad_tensor = self._get_grads(samples_input, sparse_labels)
-
-        grad_tensor = grad_tensor.view(shape)
 
         mult_grads = samples_delta * grad_tensor if self.scale_by_inputs else grad_tensor
         attribution = mult_grads.mean(1)
