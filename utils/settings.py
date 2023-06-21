@@ -12,7 +12,7 @@ parser_default = {
     'model': 'resnet34',
     'dataset': 'ImageNet',
     'metric': 'DiffID',
-    'k': 1,
+    'k': 5,
     'bg_size': 20,
     'num_centers': 1,
 }
