@@ -113,16 +113,11 @@ class LPI(object):
         shape = list(samples_input.shape)
         shape[1] = self.bg_size
         grad_tensor = torch.zeros(shape).float().to(DEFAULT_DEVICE)
-        # shape[1] = self.k
-        # grad_sub_tensor = torch.zeros(shape).float().to(DEFAULT_DEVICE)
 
         for bg_id in range(self.bg_size):
             for k_id in range(self.k):
                 particular_slice = samples_input[:, bg_id*self.k+k_id]
                 output = self.model(particular_slice)
-                # additional
-                # output = torch.log_softmax(output, 1)
-                # original
                 batch_output = output
 
                 # should check that users pass in sparse labels
@@ -158,8 +153,7 @@ class LPI(object):
             sparse_labels (optional, default=None):
             inter (optional, default=None)
         """
-        shape = list(input_tensor.shape)
-        shape.insert(1, self.bg_size)
+        b_num = input_tensor.shape[0]
 
         ref = []
         if self.density.shape[0] > 1:
@@ -167,15 +161,15 @@ class LPI(object):
                 ref.append(self._get_ref_batch(c_ind))
 
             density_lst = []
-            for b_ind in range(shape[0]):
+            for b_ind in range(b_num):
                 center = centers[b_ind]
                 density_lst.append(self.density[center])
             densities = torch.cat(density_lst)
-            densities = densities.reshape([shape[0], -1, 1, 1, 1])
+            densities = densities.reshape([b_num, -1, 1, 1, 1])
             density_tensor = densities.cuda()
             self.density_tensor = density_tensor
         else:
-            ref = [self._get_ref_batch(0) for _ in range(shape[0])]
+            ref = [self._get_ref_batch(0) for _ in range(b_num)]
 
         reference_tensor = torch.stack(ref, dim=0).cuda()
         multi_ref_tensor = reference_tensor.repeat(1, self.k, 1, 1, 1)
