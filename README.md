@@ -23,22 +23,18 @@ Path-based attributions account for the weak dependence property by choosing a r
 
 ## Estimate Attributions with LPI
 
-### Step 1: Preparing dataset.
+### Step 1: Preparing dataset and model.
 ```
 dataset\IMAGENET
-```
-
-### Step 2: Preparing model.
-```
 pretrained_models\YOUR_MODEL
 ```
 
-### Step 3: Estimate dataset distribution.
+### Step 2: Estimate dataset distribution.
 ```
 python distribution_estimation.py -dataset ImageNet -model resnet34 -center_num 1,11 -ref_num 10,20
 ```
 
-### Step 4: Estimate attributions with LPI.
+### Step 3: Estimate attributions with LPI.
 ```
 python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric visualize -k 5 -bg_size 20 -num_center 1
 ```
@@ -47,6 +43,12 @@ python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric visual
 ```
 python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric DiffID -k 5 -bg_size 20 -num_center 1
 ```
+
+## Other Incorporated Attribution Methods
+- **Input Gradients** [[Paper](https://arxiv.org/pdf/1312.6034.pdf)]
+- **Integrated Gradients** [[Paper](http://proceedings.mlr.press/v70/sundararajan17a/sundararajan17a.pdf)]
+- **Expected Gradients** [[Paper](https://openreview.net/pdf?id=rygPm64tDH)]
+- **Adversarial Gradient Integration** [[Paper](https://www.ijcai.org/proceedings/2021/0396.pdf)]
 
 ## Bibtex
 If you found this work helpful for your research, please cite the following paper:
