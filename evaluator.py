@@ -28,20 +28,15 @@ class Evaluator(object):
     def __init__(self, model, explainer, dataloader, log=print):
         self.model = model
         self.explainer = explainer
-
         self.dataloader = dataloader
         self.log = log
-        self.n_examples = 0
-        self.n_correct = 0
-        self.n_pert_correct = 0
-        self.pos_num = 0
-        self.NL_difference = []
+
         self.model.eval()
 
     def DiffID(self, ratio_lst, centers=None):
         log = self.log
-        self.n_examples = 0
-        self.n_correct = 0
+        n_examples = 0
+        n_correct = 0
 
         loc_ind = 0
         ratio_len = len(ratio_lst)
@@ -59,8 +54,8 @@ class Evaluator(object):
 
             output = self.model(batch_image).detach()
             _, predicted = torch.max(output.data, 1)
-            self.n_correct += (predicted == target).sum().item()
-            self.n_examples += batch_size
+            n_correct += (predicted == target).sum().item()
+            n_examples += batch_size
 
             # ------------------ attribution estimation -------------------------
             if centers is not None:
@@ -121,13 +116,13 @@ class Evaluator(object):
         DiffID_acc = []
 
         for r_ind in range(ratio_len):
-            mean_accu_del = n_pert_correct_del_ins_lst[1][r_ind] / self.n_examples
+            mean_accu_del = n_pert_correct_del_ins_lst[1][r_ind] / n_examples
             var_del, mean_del = torch.var_mean(logit_change_del_ins_lst[1][r_ind], unbiased=False)
             mean_del = mean_del.item()
             deletion_logit.append(round(mean_del, 3))
             deletion_acc.append(round(mean_accu_del, 3))
 
-            mean_accu_ins = n_pert_correct_del_ins_lst[0][r_ind] / self.n_examples
+            mean_accu_ins = n_pert_correct_del_ins_lst[0][r_ind] / n_examples
             var_ins, mean_ins = torch.var_mean(logit_change_del_ins_lst[0][r_ind], unbiased=False)
             mean_ins = mean_ins.item()
             insertion_logit.append(round(mean_ins, 3))
