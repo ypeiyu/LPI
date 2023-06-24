@@ -21,7 +21,7 @@ Path-based attributions account for the weak dependence property by choosing a r
 - torchvision 0.13.1
 
 
-## Estimate Attributions with LPI
+## Estimate attributions with LPI
 
 ### Step 1: Preparing dataset and model.
 ```
@@ -44,7 +44,7 @@ python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric visual
 python main.py -attr_method=LPI -model resnet34 -dataset ImageNet -metric DiffID -k 5 -bg_size 20 -num_center 1
 ```
 
-## Other Incorporated Attribution Methods
+## Other incorporated attribution methods
 - **Input Gradients** [[Paper](https://arxiv.org/pdf/1312.6034.pdf)]
 - **Integrated Gradients** [[Paper](http://proceedings.mlr.press/v70/sundararajan17a/sundararajan17a.pdf)]
 - **Expected Gradients** [[Paper](https://openreview.net/pdf?id=rygPm64tDH)]
