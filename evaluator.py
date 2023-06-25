@@ -3,6 +3,7 @@ import cv2
 import torch
 import numpy as np
 import os
+from tqdm import tqdm
 
 from utils import undo_preprocess_input_function
 from utils import visualize
@@ -46,7 +47,7 @@ class Evaluator(object):
                                     [torch.zeros(len(self.dataloader.dataset.samples)) for _ in range(ratio_len)]]
 
         start = time.time()
-        for batch_num, (batch_image, label) in enumerate(self.dataloader):
+        for batch_num, (batch_image, label) in enumerate(tqdm(self.dataloader)):
             batch_image = batch_image.cuda()
             target = label.cuda()
 
