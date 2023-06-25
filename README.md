@@ -19,7 +19,7 @@ Path-based attributions account for the weak dependence property by choosing a r
 - numpy 1.21.5
 - pytorch 1.12.0
 - torchvision 0.13.1
-
+- tqdm 4.64.0
 
 ## Estimate attributions with LPI
 
