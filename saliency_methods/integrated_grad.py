@@ -129,8 +129,8 @@ class IntegratedGradients(object):
         shape.insert(1, self.k)
 
         reference_tensor = torch.zeros(*input_tensor.shape).cuda().to(DEFAULT_DEVICE)
-        from utils import preprocess_input_function
-        reference_tensor = preprocess_input_function(reference_tensor)
+        from utils import preprocess
+        reference_tensor = preprocess(reference_tensor, d_name='imagenet')
         reference_tensor = reference_tensor.repeat([self.k, 1, 1, 1])
         reference_tensor = reference_tensor.view(shape)
 
