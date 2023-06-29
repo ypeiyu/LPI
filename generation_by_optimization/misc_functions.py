@@ -178,12 +178,12 @@ def preprocess_image(pil_im=None, resize_im=None):
     # im_as_var = Variable(im_as_ten, requires_grad=True)
     # return im_as_var
 
-    from utils.preprocess import preprocess_input_function
+    from utils.preprocess import preprocess
 
     batch_size = 1
     shape = [batch_size, 3, 224, 224]
     im_as_ten = torch.FloatTensor(*shape).uniform_(0, 1).to("cuda")
-    im_as_ten = preprocess_input_function(im_as_ten)
+    im_as_ten = preprocess(im_as_ten, d_name='imagenet')
 
     im_as_var = Variable(im_as_ten, requires_grad=True)
 
@@ -211,7 +211,6 @@ def recreate_image(im_as_var):
     # recreated_im = np.uint8(recreated_im).transpose(1, 2, 0)
     #
 
-    # im_as_var = undo_preprocess_input_function(im_as_var)
     im_as_var = im_as_var[0].detach().cpu().numpy()
     im_as_var = np.uint8(im_as_var*255)
     return im_as_var

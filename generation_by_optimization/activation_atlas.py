@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import os
-from utils import undo_preprocess_input_function
+from utils import undo_preprocess
 
 
 def render_centroid(representation, inds):
@@ -26,7 +26,7 @@ def render_icons(icon_ids, f_name, imagenet_train_loader=None, icon_size=40, is_
             img_id = batch_sta + ind
             if img_id in icon_id_lst:
                 icon = img[ind].unsqueeze(0)
-                icon = undo_preprocess_input_function(icon)[0]
+                icon = undo_preprocess(icon, d_name='imagenet')[0]
                 icon = icon.data.numpy() * 255
                 icon = icon.astype(np.uint8)
                 icon = np.transpose(icon, [1, 2, 0])
@@ -61,7 +61,7 @@ def render_sub_icons(icon_ids, f_name, imagenet_train_loader=None, v2c_dict=None
             if img_id in icon_id_lst:
                 c_id = v2c_dict[img_id]
                 icon = img[ind].unsqueeze(0)
-                icon = undo_preprocess_input_function(icon)[0]
+                icon = undo_preprocess(icon, d_name='imagenet')[0]
                 icon = icon.data.numpy() * 255
                 icon = icon.astype(np.uint8)
                 icon = np.transpose(icon, [1, 2, 0])
