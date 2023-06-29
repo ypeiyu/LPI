@@ -5,7 +5,7 @@ import numpy as np
 import os
 from tqdm import tqdm
 
-from utils import undo_preprocess_input_function
+from utils import undo_preprocess
 from utils import visualize
 
 
@@ -165,7 +165,7 @@ class Evaluator(object):
             else:
                 saliency_map = self.explainer.shap_values(image, sparse_labels=target)
 
-            image = undo_preprocess_input_function(image).detach().cpu().numpy()
+            image = undo_preprocess(image, d_name='imagenet').detach().cpu().numpy()
 
             if not os.path.exists(file_name):
                 os.mkdir(file_name)
