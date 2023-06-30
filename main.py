@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 
 from torchvision import models
 from utils.settings import img_size
-from utils.preprocess import mean, std
+from utils.preprocess import mean_std_dict
 from saliency_methods import RandomBaseline, Gradients, IntegratedGradients, ExpectedGradients, AGI, LPI
 from evaluator import Evaluator
 
@@ -103,7 +103,9 @@ def load_dataset(dataset_name, test_batch_size):
 
 
     # ---------------------------- imagenet train ---------------------------
-    if 'ImageNet' in dataset_name:
+    if 'imagenet' in dataset_name:
+        mean, std = mean_std_dict['imagenet']
+
         imagenet_train_dataset = datasets.ImageNet(
             root='datasets',
             split='train',
