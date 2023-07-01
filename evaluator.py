@@ -9,9 +9,9 @@ from utils import undo_preprocess
 from utils import visualize
 
 
-def normalize_saliency_map(saliency_map):
-    saliency_map = torch.sum(torch.abs(saliency_map), dim=1, keepdim=True)
-    # saliency_map = torch.abs(saliency_map)
+def normalize_saliency_map(saliency_map, absolute=True):
+    if absolute:
+        saliency_map = torch.sum(torch.abs(saliency_map), dim=1, keepdim=True)
 
     flat_s = saliency_map.view((saliency_map.size(0), -1))
     temp, _ = flat_s.min(1, keepdim=True)
@@ -20,7 +20,8 @@ def normalize_saliency_map(saliency_map):
     temp, _ = flat_s.max(1, keepdim=True)
     saliency_map = saliency_map / (temp.unsqueeze(1).unsqueeze(1) + 1e-10)
 
-    saliency_map = saliency_map.repeat(1, 3, 1, 1)
+    if absolute:
+        saliency_map = saliency_map.repeat(1, 3, 1, 1)
 
     return saliency_map
 
