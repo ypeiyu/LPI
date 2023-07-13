@@ -2,6 +2,7 @@ import functools
 import operator
 import torch
 from torch.autograd import grad
+from utils import preprocess
 
 DEFAULT_DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -37,11 +38,12 @@ def gather_nd(params, indices):
 
 
 class IntegratedGradients(object):
-    def __init__(self, model, k=1, scale_by_inputs=True):
+    def __init__(self, model, k=1, scale_by_inputs=True, dataset_name='imagenet'):
         self.model = model
         self.model.eval()
         self.k = k
         self.scale_by_inputs = scale_by_inputs
+        self.dataset_name=dataset_name
 
     def _get_samples_input(self, input_tensor, reference_tensor):
         '''
@@ -129,8 +131,8 @@ class IntegratedGradients(object):
         shape.insert(1, self.k)
 
         reference_tensor = torch.zeros(*input_tensor.shape).cuda().to(DEFAULT_DEVICE)
-        from utils import preprocess
-        reference_tensor = preprocess(reference_tensor, d_name='imagenet')
+
+        reference_tensor = preprocess(reference_tensor, d_name=self.dataset_name)
         reference_tensor = reference_tensor.repeat([self.k, 1, 1, 1])
         reference_tensor = reference_tensor.view(shape)
 
