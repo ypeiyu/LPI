@@ -17,6 +17,8 @@ from utils.settings import parser_choices, parser_default
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-gpuid', nargs=1, type=str, default='0')
+parser.add_argument('-batch_size', type=int,
+                    default=parser_default['batch_size'])
 parser.add_argument('-attr_method', type=str, required=False,
                     choices=parser_choices['attr_method'],
                     default=parser_default['attr_method'])
@@ -56,7 +58,8 @@ def load_explainer(model, **kwargs):
     elif method_name == 'ExpGrad' or method_name == 'ExpGrad_new':
         print('============================ Expected Gradients ============================')
         expected_grad = ExpectedGradients(model, k=kwargs['k'], bg_dataset=kwargs['train_dataset'],
-                                          bg_size=kwargs['bg_size'], batch_size=kwargs['test_batch_size'], random_alpha=kwargs['random_alpha'])
+                                          bg_size=kwargs['bg_size'], batch_size=kwargs['test_batch_size'],
+                                          random_alpha=True)
         return expected_grad
     elif method_name == 'IntGrad':
         print('============================ Integrated Gradients ============================')
@@ -121,7 +124,7 @@ def load_dataset(dataset_name, test_batch_size):
         return imagenet_train_dataset, imagenet_val_loader
 
 
-def attr_eval(method_name, model_name, dataset_name, metric, k=None, bg_size=None, num_centers=None):
+def attr_eval(method_name, model_name, dataset_name, metric, k, bg_size, num_centers=None):
     if model_name == 'vgg16':
         model = models.vgg16(pretrained=True)
     elif model_name == 'resnet34':
@@ -132,19 +135,19 @@ def attr_eval(method_name, model_name, dataset_name, metric, k=None, bg_size=Non
 
     # =================== load train dataset & test loader ========================
 
-    test_bth = 40
+    test_bth = args.batch_size
     train_dataset, test_loader = load_dataset(dataset_name=dataset_name, test_batch_size=test_bth)
 
     # =================== load explainer ========================
     explainer_args = {
         'Random': {'method_name': 'Random'},
         'InputGrad': {'method_name': 'InputGrad'},
-        'IntGrad': {'method_name': 'IntGrad', 'k': 20, 'dataset_name': dataset_name},
-        'AGI': {'method_name': 'AGI', 'k': 20, 'top_k': 1, 'cls_num': 1000},
-        'ExpGrad': {'method_name': 'ExpGrad', 'k': 1, 'bg_size': 20, 'train_dataset': train_dataset,
-                    'test_batch_size': test_bth, 'random_alpha': False},
-        'LPI': {'method_name': 'LPI', 'k': 1, 'bg_size': 20, 'num_centers': num_centers,
-                'root_pth': 'dataset_distribution/'+model_name+'/'},
+        'IntGrad': {'method_name': 'IntGrad', 'k': k, 'dataset_name': dataset_name},
+        'AGI': {'method_name': 'AGI', 'k': k, 'top_k': bg_size, 'cls_num': 1000},
+        'ExpGrad': {'method_name': 'ExpGrad', 'k': k, 'bg_size': bg_size, 'train_dataset': train_dataset,
+                    'test_batch_size': test_bth},
+        'LPI': {'method_name': 'LPI', 'k': k, 'bg_size': bg_size, 'num_centers': num_centers,
+                'root_pth': 'dataset_distribution/'+model_name+'/', 'dataset_name': dataset_name},
     }
 
     if k is not None:
