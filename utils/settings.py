@@ -8,10 +8,11 @@ parser_choices = {
 }
 
 parser_default = {
+    'batch_size': 32,
     'attr_method': 'LPI',
     'model': 'resnet34',
     'dataset': 'imagenet',
-    'metric': 'DiffID',
+    'metric': 'visualize',
     'k': 5,
     'bg_size': 20,
     'num_centers': 1,
