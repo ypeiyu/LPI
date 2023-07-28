@@ -78,6 +78,9 @@ class AGI(object):
         self.model.eval()
         init_pred = output.max(1, keepdim=True)[1].squeeze(1)  # get the index of the max log-probability
 
+        if sparse_labels is None:
+            sparse_labels = init_pred
+
         # initialize the step_grad towards all target false classes
         step_grad = 0
         top_ids_lst = []

@@ -83,9 +83,9 @@ class ExpectedGradients(object):
                 particular_slice.requires_grad = True
                 output = self.model(particular_slice)
 
-                batch_output = None
-                if sparse_labels is not None:
-                    batch_output = -1 * F.nll_loss(output, sparse_labels.flatten(), reduction='sum')
+                if sparse_labels is None:
+                    sparse_labels = output.max(1, keepdim=True)[1].squeeze(1)
+                batch_output = -1 * F.nll_loss(output, sparse_labels.flatten(), reduction='sum')
 
                 self.model.zero_grad()
                 batch_output.backward()

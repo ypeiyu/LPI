@@ -26,10 +26,10 @@ class Gradients(object):
 
         output = self.model(input_tensor)
 
-        batch_output = None
+        if sparse_labels is None:
+            sparse_labels = output.max(1, keepdim=True)[1].squeeze(1)
 
-        if sparse_labels is not None:
-            batch_output = -1 * F.nll_loss(output, sparse_labels.flatten(), reduction='sum')
+        batch_output = -1 * F.nll_loss(output, sparse_labels.flatten(), reduction='sum')
 
         self.model.zero_grad()
         batch_output.backward()
