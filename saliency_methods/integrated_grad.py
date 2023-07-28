@@ -65,7 +65,7 @@ class IntegratedGradients(object):
             # Only look at the user-specified label
 
             if sparse_labels is None:
-                sparse_labels = output.max(1, keepdim=True)[1].squeeze(1)
+                sparse_labels = output.max(1, keepdim=False)[1]
 
             batch_output = -1 * F.nll_loss(output, sparse_labels.flatten(), reduction='sum')
 

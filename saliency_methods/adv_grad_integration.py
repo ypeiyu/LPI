@@ -76,7 +76,7 @@ class AGI(object):
         # Forward pass the data through the model
         output = self.model(input_tensor)
         self.model.eval()
-        init_pred = output.max(1, keepdim=True)[1].squeeze(1)  # get the index of the max log-probability
+        init_pred = output.max(1, keepdim=False)[1]  # get the index of the max log-probability
 
         if sparse_labels is None:
             sparse_labels = init_pred
