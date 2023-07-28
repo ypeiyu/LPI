@@ -1,41 +1,6 @@
-import functools
-import operator
-
 import torch
-from torch.autograd import grad
+import torch.nn.functional as F
 import random
-
-
-def gather_nd(params, indices):
-    """
-    Args:
-        params: Tensor to index
-        indices: k-dimension tensor of integers.
-    Returns:
-        output: 1-dimensional tensor of elements of ``params``, where
-            output[i] = params[i][indices[i]]
-
-            params   indices   output
-
-            1 2       1 1       4
-            3 4       2 0 ----> 5
-            5 6       0 0       1
-    """
-    max_value = functools.reduce(operator.mul, list(params.size())) - 1
-    indices = indices.t().long()
-    ndim = indices.size(0)
-    idx = torch.zeros_like(indices[0]).long()
-    m = 1
-
-    for i in range(ndim)[::-1]:
-        idx += indices[i]*m
-        m *= params.size(i)
-
-    idx[idx < 0] = 0
-    idx[idx > max_value] = 0
-    return torch.take(params, idx)
-
-# count = 0
 
 
 def fgsm_step(image, epsilon, data_grad_adv, data_grad_lab):
@@ -57,43 +22,33 @@ def pgd_step(image, epsilon, model, init_pred, targeted, max_iter):
     """target here is the targeted class to be perturbed to"""
     perturbed_image = image.clone()
     c_delta = 0  # cumulative delta
+
     for i in range(max_iter):
         # requires grads
         perturbed_image.requires_grad = True
+
         output = model(perturbed_image)
-        # if attack is successful, then break
-        pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
-        if False not in (pred == targeted.view(-1, 1)):
-            break
 
-        output = -torch.log_softmax(output, 1)/output.shape[0]
-        sample_indices = torch.arange(0, output.size(0)).cuda()
-        indices_tensor = torch.cat([
-            sample_indices.unsqueeze(1),
-            targeted.unsqueeze(1)], dim=1)
-        loss = gather_nd(output, indices_tensor)
+        # ---------------------- data_grad_label -----------------------
+        batch_output = -1. * F.nll_loss(output, targeted.flatten(), reduction='sum')
         model.zero_grad()
-        model_grads = grad(
-            outputs=loss,
-            inputs=perturbed_image,
-            grad_outputs=torch.ones_like(loss).cuda(),
-            create_graph=True)
-        data_grad_adv = model_grads[0].detach().data
+        batch_output.backward(retain_graph=True)
+        gradients = perturbed_image.grad.clone()
+        perturbed_image.grad.zero_()
+        gradients.detach()
+        data_grad_label = gradients
 
-        sample_indices = torch.arange(0, output.size(0)).cuda()
-        indices_tensor = torch.cat([
-            sample_indices.unsqueeze(1),
-            init_pred.unsqueeze(1)], dim=1)
-        loss = gather_nd(output, indices_tensor)
+        # ---------------------- data_grad_pred -----------------------
+        batch_output = -1. * F.nll_loss(output, init_pred.flatten(), reduction='sum')
         model.zero_grad()
-        model_grads = grad(
-            outputs=loss,
-            inputs=perturbed_image,
-            grad_outputs=torch.ones_like(loss).cuda(),
-            create_graph=True)
-        data_grad_lab = model_grads[0].detach().data
+        batch_output.backward()
+        gradients = perturbed_image.grad.clone()
+        perturbed_image.grad.zero_()
+        gradients.detach()
 
-        perturbed_image, delta = fgsm_step(image, epsilon, data_grad_adv, data_grad_lab)
+        data_grad_pred = gradients
+
+        perturbed_image, delta = fgsm_step(image, epsilon, data_grad_label, data_grad_pred)
         c_delta += delta
 
     return c_delta, perturbed_image
