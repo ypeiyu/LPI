@@ -6,20 +6,17 @@ import numpy.linalg
 
 import torch.utils.data
 from torchvision import models
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
 
 from utils import img_size
-from utils import mean, std
+from utils.preprocess import mean_std_dict
 
 from generation_by_optimization import render_representation, render_density, render_sub_icons
 # import umap
 import matplotlib.pyplot as plt
 
 import argparse
-
-#     dataset = 'ImageNet'
-#     model = 'resnet34'
-#     center_num_lst = [11]
-#     ref_num_lst = [20, ]
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-gpuid', nargs=1, type=str, default='0')
@@ -33,68 +30,67 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpuid
 
 
 def computing_distribution(dataset_name, model_name, center_num_lst, ref_num_lst):
-    import torchvision.datasets as datasets
-    import torchvision.transforms as transforms
+    test_batch_size = 200
 
     # ------------------------------ model and dataset preparation --------------------------------
     ####################################################
     ############### IMAGENET 2012 ######################
     ####################################################
-    imagenet_train_dataset = datasets.ImageNet(
-        root='datasets',
-        split='train',
-        transform=transforms.Compose([
-            transforms.Resize(size=(img_size, img_size)),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std),
-        ]))
-    test_batch_size = 200
-    imagenet_train_loader = torch.utils.data.DataLoader(
-        imagenet_train_dataset, batch_size=test_batch_size,
-        shuffle=False, num_workers=20, pin_memory=False)
+    if dataset_name == 'imagenet':
+        mean, std = mean_std_dict[dataset_name]
+
+        imagenet_train_dataset = datasets.ImageNet(
+            root='datasets',
+            split='train',
+            transform=transforms.Compose([
+                transforms.Resize(size=(img_size, img_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+            ]))
+        imagenet_train_loader = torch.utils.data.DataLoader(
+            imagenet_train_dataset, batch_size=test_batch_size,
+            shuffle=False, num_workers=20, pin_memory=False)
 
     ####################################################
     #################### CIFAR-10 ######################
     ####################################################
-    import torchvision.transforms as transforms
-    import torchvision.datasets as datasets
-    cifar10_mean = (0.4914, 0.4822, 0.4465)
-    cifar10_std = (0.2471, 0.2435, 0.2616)
-    cifar10_tr_dataset = datasets.CIFAR10('datasets/cifar10',
-                                          train=True,
-                                          transform=transforms.Compose([
-                                              transforms.ToTensor(),
-                                              transforms.Normalize(mean=cifar10_mean, std=cifar10_std),
-                                          ]),
-                                          download=True)
-    cifar10_tr_loader = torch.utils.data.DataLoader(
-        dataset=cifar10_tr_dataset, batch_size=test_batch_size,
-        shuffle=True, num_workers=6, pin_memory=False, drop_last=False)
+    elif dataset_name == 'cifar10':
+        mean, std = mean_std_dict[dataset_name]
+
+        cifar10_tr_dataset = datasets.CIFAR10('datasets/cifar10',
+                                              train=True,
+                                              transform=transforms.Compose([
+                                                  transforms.ToTensor(),
+                                                  transforms.Normalize(mean=mean, std=std),
+                                              ]),
+                                              download=True)
+        cifar10_tr_loader = torch.utils.data.DataLoader(
+            dataset=cifar10_tr_dataset, batch_size=test_batch_size,
+            shuffle=True, num_workers=6, pin_memory=False, drop_last=False)
 
     ####################################################
     ################### CIFAR-100 ######################
     ####################################################
-    import torchvision.transforms as transforms
-    import torchvision.datasets as datasets
-    cifar100_mean = (0.5070751592371323, 0.48654887331495095, 0.4409178433670343)
-    cifar100_std = (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
-    cifar100_tr_dataset = datasets.CIFAR100('datasets/cifar100',
-                                            train=True,
-                                            transform=transforms.Compose([
-                                                transforms.ToTensor(),
-                                                transforms.Normalize(mean=cifar100_mean, std=cifar100_std),
-                                            ]),
-                                            download=True)
-    cifar100_tr_loader = torch.utils.data.DataLoader(
-        dataset=cifar100_tr_dataset, batch_size=test_batch_size,
-        shuffle=True, num_workers=6, pin_memory=False, drop_last=False)
+    elif dataset_name == 'cifar100':
+        mean, std = mean_std_dict[dataset_name]
+
+        cifar100_tr_dataset = datasets.CIFAR100('datasets/cifar100',
+                                                train=True,
+                                                transform=transforms.Compose([
+                                                    transforms.ToTensor(),
+                                                    transforms.Normalize(mean=mean, std=std),
+                                                ]),
+                                                download=True)
+        cifar100_tr_loader = torch.utils.data.DataLoader(
+            dataset=cifar100_tr_dataset, batch_size=test_batch_size,
+            shuffle=True, num_workers=6, pin_memory=False, drop_last=False)
 
     # choose dataset
-    if dataset_name == 'ImageNet':
+    if dataset_name == 'imagenet':
         imagenet_train_loader = imagenet_train_loader
-    if dataset_name == 'CIFAR10':
+    if dataset_name == 'cifar10':
         imagenet_train_loader = cifar10_tr_loader
-    elif dataset_name == 'CIFAR100':
+    elif dataset_name == 'cifar100':
         imagenet_train_loader = cifar100_tr_loader
 
     # choose model
