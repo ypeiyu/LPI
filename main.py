@@ -87,8 +87,8 @@ def load_explainer(model, **kwargs):
         density_tensor = torch.from_numpy(density)
 
         # ----------------------------------------------------------------------------------
-        completed_grad = LPI(model, k=kwargs['k'], density=density_tensor, random_alpha=True, datasets=bg_datasets)
-        return completed_grad
+        lpi_grad = LPI(model, k=kwargs['k'], density=density_tensor, random_alpha=True, datasets=bg_datasets)
+        return lpi_grad
     else:
         return None
 
